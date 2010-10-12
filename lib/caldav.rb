@@ -24,6 +24,7 @@ module Net
 end
 
 class Caldav
+    CALDAV_NAMESPACE = "urn:ietf:params:xml:ns:caldav"
     attr_accessor :host, :port, :url, :user, :password
 
     def initialize( host, port, url, user, password )
@@ -36,7 +37,7 @@ class Caldav
 
     def report start, stop
         dings = """<?xml version='1.0'?>
-<c:calendar-query xmlns:c='urn:ietf:params:xml:ns:caldav'>
+<c:calendar-query xmlns:c='#{CALDAV_NAMESPACE}'>
   <d:prop xmlns:d='DAV:'>
     <d:getetag/>
     <c:calendar-data>
@@ -67,7 +68,7 @@ class Caldav
         }
         result = []
         xml = REXML::Document.new( res.body )
-        REXML::XPath.each( xml, '//c:calendar-data/', { "c"=>"urn:ietf:params:xml:ns:caldav"} ){ |c|
+        REXML::XPath.each( xml, '//c:calendar-data/', { "c"=>CALDAV_NAMESPACE} ){ |c|
             result <<  parseVcal( c.text )
         }
         return result
@@ -184,7 +185,7 @@ END:VCALENDAR"""
 
     def todo 
         dings = """<?xml version='1.0'?>
-<c:calendar-query xmlns:c='urn:ietf:params:xml:ns:caldav'>
+<c:calendar-query xmlns:c='#{CALDAV_NAMESPACE}'>
   <d:prop xmlns:d='DAV:'>
     <d:getetag/>
     <c:calendar-data>
@@ -207,7 +208,7 @@ END:VCALENDAR"""
         }
         result = []
         xml = REXML::Document.new( res.body )
-        REXML::XPath.each( xml, '//calendar-data/', { "c"=>"urn:ietf:params:xml:ns:caldav"} ){ |c|
+        REXML::XPath.each( xml, '//c:calendar-data', { "c"=>CALDAV_NAMESPACE} ){ |c|
             result << parseVcal( c.text )
         }
         return result
