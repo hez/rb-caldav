@@ -46,7 +46,7 @@ class Caldav
        @password = password 
     end
 
-    def report range
+    def report calendar, range
         dings = """<?xml version='1.0'?>
 <c:calendar-query xmlns:c='#{CALDAV_NAMESPACE}'>
   <d:prop xmlns:d='DAV:'>
@@ -70,7 +70,7 @@ class Caldav
         #Net::HTTP.start(@host, @port) {|http|
         http.start {|http|
 
-            req = Net::HTTP::Report.new(@url, initheader = {'Content-Type'=>'application/xml'} )
+            req = Net::HTTP::Report.new(calendar.path, initheader = {'Content-Type'=>'application/xml'} )
             req.basic_auth @user, @password
             req.body = dings
 
@@ -194,7 +194,7 @@ END:VCALENDAR"""
         return event.uid
     end
 
-    def todo 
+    def todo calendar
         dings = """<?xml version='1.0'?>
 <c:calendar-query xmlns:c='#{CALDAV_NAMESPACE}'>
   <d:prop xmlns:d='DAV:'>
@@ -212,7 +212,7 @@ END:VCALENDAR"""
 """
         res = nil
         Net::HTTP.start(@host, @port) {|http|
-            req = Net::HTTP::Report.new(@url, initheader = {'Content-Type'=>'application/xml'} )
+            req = Net::HTTP::Report.new(calendar.path, initheader = {'Content-Type'=>'application/xml'} )
             req.basic_auth @user, @password
             req.body = dings
             res = http.request( req )
