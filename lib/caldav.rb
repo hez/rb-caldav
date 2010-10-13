@@ -25,6 +25,7 @@ end
 
 class Caldav
     CALDAV_NAMESPACE = "urn:ietf:params:xml:ns:caldav"
+    TIME_FORMAT = '%Y%m%dT%H%M%SZ'
     attr_accessor :host, :port, :url, :user, :password
 
     def initialize( host, port, url, user, password )
@@ -35,7 +36,7 @@ class Caldav
        @password = password 
     end
 
-    def report start, stop
+    def report range
         dings = """<?xml version='1.0'?>
 <c:calendar-query xmlns:c='#{CALDAV_NAMESPACE}'>
   <d:prop xmlns:d='DAV:'>
@@ -46,7 +47,7 @@ class Caldav
   <c:filter>
     <c:comp-filter name='VCALENDAR'>
       <c:comp-filter name='VEVENT'>
-        <c:time-range start='#{start}Z' end='#{stop}Z'/>
+        <c:time-range start='#{range.begin.strftime(TIME_FORMAT)}' end='#{range.end.strftime(TIME_FORMAT)}'/>
       </c:comp-filter>
     </c:comp-filter>
   </c:filter>
