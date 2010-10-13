@@ -105,7 +105,6 @@ class Caldav
 
     def create event
         now = DateTime.now 
-        nowstr = now.strftime "%Y%m%dT%H%M%SZ"
         uuid =  UUID.new
 
         dings = """BEGIN:VCALENDAR
@@ -132,11 +131,11 @@ END:STANDARD
 END:VTIMEZONE
 
 BEGIN:VEVENT
-CREATED:#{nowstr}
+CREATED:#{now.strftime(TIME_FORMAT)}
 UID:#{uuid}
 SUMMARY:#{event.summary}
-DTSTART;TZID=Europe/Vienna:#{event.dtstart}
-DTEND;TZID=Europe/Vienna:#{event.dtend}
+DTSTART;TZID=Europe/Vienna:#{event.dtstart.strftime(TIME_FORMAT)}
+DTEND;TZID=Europe/Vienna:#{event.dtend.strftime(TIME_FORMAT)}
 END:VEVENT
 END:VCALENDAR"""
 
@@ -176,11 +175,11 @@ END:STANDARD
 END:VTIMEZONE
 
 BEGIN:VEVENT
-CREATED:#{event.created}
+CREATED:#{event.created.strftime(TIME_FORMAT)}
 UID:#{event.uid}
 SUMMARY:#{event.summary}
-DTSTART;TZID=Europe/Vienna:#{event.dtstart}
-DTEND;TZID=Europe/Vienna:#{event.dtend}
+DTSTART;TZID=Europe/Vienna:#{event.dtstart.strftime(TIME_FORMAT)}
+DTEND;TZID=Europe/Vienna:#{event.dtend.strftime(TIME_FORMAT)}
 END:VEVENT
 END:VCALENDAR"""
 
@@ -257,31 +256,36 @@ END:VCALENDAR"""
     end
 
     def parseVcal( vcal )
-        if vcal.index( "VEVENT" ) then
-            e = Event.new
-            data = filterTimezone( vcal )
-            data.split("\n").each{ |l|
-                e.uid = getField( "UID:", l) if l =~ /UID/
-                e.created = getField( "CREATED:", l) if l =~ /CREATED/
-                e.dtstart = getField( "DTSTART", l) if l =~ /DTSTART/
-                e.dtend = getField( "DTEND", l) if l =~ /DTEND/
-                e.lastmodified = getField( "LAST-MODIFIED:", l) if l =~ /LAST-MODIFIED/
-                e.summary = getField( "SUMMARY", l) if l =~ /SUMMARY/
-            }
-            return e
-        elsif vcal.index( "VTODO" ) then 
-            e = Todo.new
-            vcal.split("\n").each{ |l|
-                e.uid = getField( "UID:", l ) if l =~ /UID:/
-                e.created = getField( "CREATED:", l) if l =~ /CREATED:/
-                e.dtstart = getField( "DTSTAMP:", l) if l =~ /DTSTAMP:/
-                e.lastmodified = getField( "LAST-MODIFIED:", l) if l =~ /LAST-MODIFIED:/
-                e.summary = getField( "SUMMARY:", l) if l =~ /SUMMARY:/
-                e.status = getField( "STATUS:", l) if l =~ /STATUS:/
-                e.completed = getField( "COMPLETED:", l) if l =~ /COMPLETED:/
-            }
-            return e
+      if vcal.index( "VEVENT" ) then
+        e = Event.new
+        data = filterTimezone( vcal )
+      elsif( vcal.index( 'VTODO' ) ) then
+        data = vcal
+        e = Todo.new
+      end
+      data.split("\n").each do |l|
+        case( l )
+          when /UID/
+            e.uid = getField( "UID", l)
+          when /CREATED/
+            e.created = Time.parse(getField( "CREATED", l))
+          when /DTSTART/
+            e.dtstart = Time.parse(getField( "DTSTART", l))
+          when /DTEND/
+            e.dtend = Time.parse(getField( "DTEND", l))
+          when /LAST-MODIFIED/
+            e.lastmodified = Time.parse(getField( "LAST-MODIFIED", l))
+          when /SUMMARY/
+            e.summary = getField( "SUMMARY", l)
+          when /STATUS/
+            e.status = getField( "STATUS", l)
+          when /COMPLETED/
+            e.completed = Time.parse(getField( "COMPLETED", l))
+          when /DESCRIPTION/
+            e.description = getField( "DESCRIPTION", l)
         end
+      end
+      e
     end
     
     def filterTimezone( vcal )
