@@ -13,6 +13,16 @@ class Todo
     attr_accessor :uid, :created, :summary, :dtstart, :status, :completed
 end
 
+class Calendar
+  attr_accessor :path, :name
+end
+
+class CalendarsCollection < Array
+  def CalendarsCollection.[]( name )
+    select { | cal | cal.name.downcase =~ name }
+  end
+end
+
 module Net
     class HTTP
         class Report < HTTPRequest
@@ -213,6 +223,37 @@ END:VCALENDAR"""
             result << parseVcal( c.text )
         }
         return result
+    end
+
+    def calendars
+      dings = """<?xml version='1.0'?>
+<d:propfind xmlns:d='DAV:' xmlns:c='#{CALDAV_NAMESPACE}'>
+<d:prop>
+<c:calendar-free-busy-set/>
+<d:displayname/>
+<d:resourcetype/>
+</d:prop>
+</d:propfind>
+"""
+      res = nil
+      Net::HTTP.start(@host, @port) do | http |
+          req = Net::HTTP::Propfind.new(@url, initheader = {'Content-Type'=>'application/xml'} )
+          req.basic_auth @user, @password
+          req['DEPTH'] = 1
+          req.body = dings
+          res = http.request( req )
+      end
+      result = CalendarsCollection.new
+      xml = REXML::Document.new( res.body )
+      REXML::XPath.each( xml, "//[*/*/*/c:calendar]", {'c' => CALDAV_NAMESPACE} ) do | c |
+        href = c.elements['href'].text
+        display_name = c.elements['propstat/prop/displayname'].text
+        calendar = Calendar.new
+        calendar.path = href
+        calendar.name = display_name
+        result << calendar
+      end
+      result
     end
 
     def parseVcal( vcal )
