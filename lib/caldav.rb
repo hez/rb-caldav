@@ -18,8 +18,8 @@ class Calendar
 end
 
 class CalendarsCollection < Array
-  def CalendarsCollection.[]( name )
-    select { | cal | cal.name.downcase =~ name }
+  def []( name )
+    select { | cal | cal.name.downcase == name }
   end
 end
 
