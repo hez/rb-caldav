@@ -10,7 +10,7 @@ class Event
 end
 
 class Todo
-    attr_accessor :uid, :created, :summary, :dtstart, :status, :completed
+    attr_accessor :uid, :created, :summary, :dtstart, :status, :completed, :description
 end
 
 class Calendar
